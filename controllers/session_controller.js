@@ -3,6 +3,8 @@ var models = require('../models');
 var Sequelize = require('sequelize');
 var url = require('url');
 
+var userTimeOut = 2*60*1000;  //2 minutos * 60 segundos
+
 
 // Middleware: Se requiere hacer login.
 //
@@ -123,7 +125,8 @@ exports.create = function(req, res, next) {
             if (user) {
     	        // Crear req.session.user y guardar campos id y username
     	        // La sesión se define por la existencia de: req.session.user
-    	        req.session.user = {id:user.id, username:user.username, isAdmin:user.isAdmin};
+                var tiempoExpirado = Date.now() + userTimeOut;
+    	        req.session.user = {id:user.id, username:user.username, isAdmin:user.isAdmin, userTimeOut:userTimeOut, tiempoExpirado:tiempoExpirado};
 
                 res.redirect(redir); // redirección a redir
             } else {
@@ -145,3 +148,18 @@ exports.destroy = function(req, res, next) {
     
     res.redirect("/session"); // redirect a login
 };
+
+exports.autolog = function(req, res, next) {
+
+    if(req.session.user) {
+        if(req.session.user.tiempoExpirado >= Date.now()) {
+            req.session.user.tiempoExpirado = Date.now() + userTimeOut;
+            req.session.user.userTimeOut = userTimeOut;
+        }
+        else{
+            delete req.session.user;
+            req.flash('info', 'La sesión ha caducado');
+        }
+    }
+    next();
+}

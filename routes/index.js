@@ -12,6 +12,10 @@ router.get('/', function(req, res, next) {
   res.render('index');
 });
 
+router.get('/creditos', function(req,res){
+	res.render('creditos/author', {title: 'Autor'});
+});
+
 
 // Autoload de parametros
 router.param('quizId', quizController.load);  // autoload :quizId
@@ -41,8 +45,8 @@ router.delete('/users/:userId(\\d+)',   sessionController.loginRequired,
 										userController.destroy);  // borrar cuenta
 
 // Definición de rutas de /quizzes
-router.get('/quizzes',                     	quizController.index);
-router.get('/quizzes/:quizId(\\d+)',       	quizController.show);
+router.get('/quizzes.:format?',                     	quizController.index);
+router.get('/quizzes/:quizId(\\d+).:format?',       	quizController.show);
 router.get('/quizzes/:quizId(\\d+)/check', 	quizController.check);
 router.get('/quizzes/new',                 	sessionController.loginRequired, 
 											quizController.new);

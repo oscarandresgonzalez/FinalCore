@@ -35,30 +35,61 @@ exports.ownershipRequired = function(req, res, next){
 
 // GET /quizzes
 exports.index = function(req, res, next) {
-	models.Quiz.findAll()
-		.then(function(quizzes) {
-			res.render('quizzes/index.ejs', { quizzes: quizzes});
+  
+  
+
+  console.log(search)
+  var search = req.query.search || "";
+  console.log(search)
+
+
+
+	models.Quiz.findAll({where: {question: {$like: "%"+search+"%"}}})
+  .then(function(quizzes){
+
+      if(!req.params.format || req.params.format === "html") {
+        res.render('quizzes/index.ejs', {quizzes: quizzes,
+                                     });
+      }
+      else if (req.params.format === "json") {
+        res.json(quizzes);
+      }else{
+        throw new Error('Ese formato no se admite');
+      }      
+		  
 		})
-		.catch(function(error) {
-			next(error);
-		});
+    .catch(function(error) {
+        next(error);
+         });
 };
 
 
 // GET /quizzes/:id
 exports.show = function(req, res, next) {
 
-	var answer = req.query.answer || '';
+	
 
-	res.render('quizzes/show', {quiz: req.quiz,
-								answer: answer});
+  if(!req.params.format || req.params.format === "html") {
+    var answer = req.query.answer || '';
+
+    res.render('quizzes/show', {quiz: req.quiz,
+                                answer: answer});
+  }
+  else if (req.params.format === "json") {
+    res.json(req.quiz);
+  }
+  else{
+    throw new Error('Ese formato no se admite');
+  }
+
 };
 
 
 // GET /quizzes/:id/check
 exports.check = function(req, res, next) {
-
+  console.log("answer")
 	var answer = req.query.answer || "";
+   console.log("answer")
 
 	var result = answer === req.quiz.answer ? 'Correcta' : 'Incorrecta';
 
@@ -77,11 +108,12 @@ exports.new = function(req, res, next) {
 // POST /quizzes/create
 exports.create = function(req, res, next) {
 
-  var authorId = req.session.user && req.session.user.id || 0;
+  //var authorId = req.session.user && req.session.user.id || 0;
 
   var quiz = models.Quiz.build({ question: req.body.quiz.question, 
-  	                             answer:   req.body.quiz.answer,
-                                 AuthorId: authorId } );
+  	                             answer:   req.body.quiz.answer
+                                 //AuthorId: authorId 
+                               } );
 
   // guarda en DB los campos pregunta y respuesta de quiz
   quiz.save({fields: ["question", "answer", "AuthorId"]})
